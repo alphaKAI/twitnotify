@@ -42,23 +42,36 @@ class TwitNotify{
   void startWatchingService(){
     foreach(line; t4d.stream()){
       if(match(line.to!string, regex(r"\{.*\}"))){
-        auto parsed = parseJSON(line.to!string);
+       auto parsed = parseJSON(line.to!string);
         if("event" in parsed.object)
           execNotification(parseEvent(parsed));
         if("text" in parsed.object){//For retweet notify
+          //超やっつけの絵文字対策()
+          //If target tweet include pictograph, this program skip such tweet to avoid crash.
+          if(match(line.to!string, regex(r"ud")))
+            continue;
+
           string textData = getJsonData(parsed, "text");
-          if(match(textData, regex(r"^RT @" ~ userName))){
-            JSONValue userJson = parsed.object["user"];
+          if(match(textData, regex(r"@" ~ userName))){//For Reply
+            JSONValue userJson     = parsed.object["user"];
             string name            = getJsonData(userJson, "name");
             string screenName      = getJsonData(userJson, "screen_name");
             string[string] message;
 
-            message["event"]   = "retweet";
-            message["icon"]    = getIconPath(userJson);
-            message["urgency"] = "normal";
-            message["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
-            message["body"]    = getJsonData(parsed, "text").replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
-            
+            if(match(textData, regex(r"^RT @" ~ userName))){
+              message["event"]   = "retweet";
+              message["icon"]    = getIconPath(userJson);
+              message["urgency"] = "normal";
+              message["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
+              message["body"]    = getJsonData(parsed, "text").replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
+            } else {
+              message["event"]   = "reply";
+              message["icon"]    = getIconPath(userJson);
+              message["urgency"] = "critical";
+              message["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
+              message["body"]    = textData;
+            }
+
             execNotification(message);
           }
         }
@@ -115,7 +128,7 @@ class TwitNotify{
           message["event"]   = eventName;
           message["icon"]    = getIconPath(sourceJson);
           message["urgency"] = "normal";
-          message["title"]   =  "<span size=\"10500\">" ~ name ~ "(@" ~ screenName ~ ") follow you!" ~ "</span>";
+          message["title"]   = "<span size=\"10500\">" ~ name ~ "(@" ~ screenName ~ ") follow you!" ~ "</span>";
           message["body"]    = "";
           break;
         default:

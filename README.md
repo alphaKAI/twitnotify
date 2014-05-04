@@ -24,6 +24,7 @@ Using my Twitter API wrapper [Twitter4D](https://github.com/alphaKAI/twitter4d)
 
 ##Disclaimer
 unstable  
+If target tweet include pictograph, this program skip such tweet to avoid crash.  
   
   
 ##LICENSE
