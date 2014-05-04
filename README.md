@@ -19,6 +19,7 @@ Using my Twitter API wrapper [Twitter4D](https://github.com/alphaKAI/twitter4d)
 ##Requirements
 * dmd(v2.065)
 * rdmd(build 20140327)
+* libnotify & notify-send
   
 
 ##Disclaimer
