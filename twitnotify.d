@@ -41,41 +41,39 @@ class TwitNotify{
 
   void startWatchingService(){
     foreach(line; t4d.stream()){
-      if(match(line.to!string, regex(r"\{.*\}"))){
-       auto parsed = parseJSON(line.to!string);
-        if("event" in parsed.object)
-          execNotification(parseEvent(parsed));
-        if("text" in parsed.object){//For retweet notify
-          //超やっつけの絵文字対策()
-          //If target tweet include pictograph, this program skip such tweet to avoid crash.
-          if(match(line.to!string, regex(r"ud")))
-            continue;
+      try{
+        if(match(line.to!string, regex(r"\{.*\}"))){
+          auto parsed = parseJSON(line.to!string);
+          if("event" in parsed.object)
+            execNotification(parseEvent(parsed));
+          if("text" in parsed.object){//For retweet notify
+            string textData = getJsonData(parsed, "text");
+            if(match(textData, regex(r"@" ~ userName))){//For Reply
+              JSONValue userJson     = parsed.object["user"];
+              string name            = getJsonData(userJson, "name");
+              string screenName      = getJsonData(userJson, "screen_name");
+              string[string] message;
 
-          string textData = getJsonData(parsed, "text");
-          if(match(textData, regex(r"@" ~ userName))){//For Reply
-            JSONValue userJson     = parsed.object["user"];
-            string name            = getJsonData(userJson, "name");
-            string screenName      = getJsonData(userJson, "screen_name");
-            string[string] message;
+              if(match(textData, regex(r"^RT @" ~ userName))){
+                message["event"]   = "retweet";
+                message["icon"]    = getIconPath(userJson);
+                message["urgency"] = "normal";
+                message["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
+                message["body"]    = getJsonData(parsed, "text").replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
+              } else {
+                message["event"]   = "reply";
+                message["icon"]    = getIconPath(userJson);
+                message["urgency"] = "critical";
+                message["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
+                message["body"]    = textData;
+              }
 
-            if(match(textData, regex(r"^RT @" ~ userName))){
-              message["event"]   = "retweet";
-              message["icon"]    = getIconPath(userJson);
-              message["urgency"] = "normal";
-              message["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
-              message["body"]    = getJsonData(parsed, "text").replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
-            } else {
-              message["event"]   = "reply";
-              message["icon"]    = getIconPath(userJson);
-              message["urgency"] = "critical";
-              message["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
-              message["body"]    = textData;
+              execNotification(message);
             }
-
-            execNotification(message);
           }
         }
       }
+      catch(Exception ignored){}//To avoid crash : If target tweet include pictograph, this program will be crash.
     }
   }
 
@@ -83,11 +81,13 @@ class TwitNotify{
     string readSettingFile(){
       if(!exists("setting.json"))
         throw new Error("Please create file of setting.json and configure your consumer & access tokens");
+      
       auto file = File("setting.json", "r");
       string buf;
-      foreach(line; file.byLine){
+
+      foreach(line; file.byLine)
         buf = buf ~ cast(string)line;
-      }
+      
       return buf;
     }
 
@@ -158,6 +158,7 @@ class TwitNotify{
       download(iconUrl, iconPath);
       if(!exists(iconPath))
         return false;
+
       return true;
     }
 
@@ -165,6 +166,7 @@ class TwitNotify{
       if(sendMessage == ["" : ""])
         return;
       writeln("[EVENT] => ", sendMessage["event"]);
+
       string notifyCommandString = "notify-send ";
       if(sendMessage["icon"] != "NULL")
         notifyCommandString ~= "-i " ~ sendMessage["icon"] ~ " ";
