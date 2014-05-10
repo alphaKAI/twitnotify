@@ -24,6 +24,7 @@ class TwitNotify{
   Twitter4D t4d;
   string iconBasePath;
   string userName;
+  string defaultTime = "1500";
 
   this(){
     string jsonString = readSettingFile();
@@ -110,6 +111,7 @@ class TwitNotify{
           message["event"]   = eventName;
           message["icon"]    = getIconPath(sourceJson);
           message["urgency"] = "normal";
+          message["wait"]    = defaultTime;
           message["title"]   = name ~ "(@" ~ screenName ~ ") favorite your tweet!";
           message["body"]    = getJsonData(parsedJson.object["target_object"], "text");
           break;
@@ -119,6 +121,7 @@ class TwitNotify{
           message["event"]   = eventName;
           message["icon"]    = getIconPath(sourceJson);
           message["urgency"] = "critical";
+          message["wait"]    = defaultTime;
           message["title"]   = name ~ "(@" ~ screenName ~ ") unfavorite your tweet";
           message["body"]    = getJsonData(parsedJson.object["target_object"], "text");
           break;
@@ -128,6 +131,7 @@ class TwitNotify{
           message["event"]   = eventName;
           message["icon"]    = getIconPath(sourceJson);
           message["urgency"] = "normal";
+          message["wait"]    = defaultTime;
           message["title"]   = "<span size=\"10500\">" ~ name ~ "(@" ~ screenName ~ ") follow you!" ~ "</span>";
           message["body"]    = "";
           break;
@@ -170,8 +174,9 @@ class TwitNotify{
       string notifyCommandString = "notify-send ";
       if(sendMessage["icon"] != "NULL")
         notifyCommandString ~= "-i " ~ sendMessage["icon"] ~ " ";
-      
+
       notifyCommandString ~= "-u " ~ sendMessage["urgency"] ~ " ";
+      notifyCommandString ~= "-t " ~ sendMessage["wait"]    ~ " ";
       notifyCommandString ~= "\'" ~ sendMessage["title"] ~ "\'" ~ " ";
       notifyCommandString ~= "\'" ~ sendMessage["body"] ~ "\'";
       
