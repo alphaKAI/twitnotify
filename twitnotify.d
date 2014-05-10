@@ -59,12 +59,14 @@ class TwitNotify{
                 message["event"]   = "retweet";
                 message["icon"]    = getIconPath(userJson);
                 message["urgency"] = "normal";
+                message["wait"]    = defaultTime;
                 message["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
                 message["body"]    = getJsonData(parsed, "text").replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
               } else {
                 message["event"]   = "reply";
                 message["icon"]    = getIconPath(userJson);
                 message["urgency"] = "critical";
+                message["wait"]    = defaultTime;
                 message["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
                 message["body"]    = textData;
               }
