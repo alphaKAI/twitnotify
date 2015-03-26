@@ -5,31 +5,42 @@ Written in D.
 Using my Twitter API wrapper [Twitter4D](https://github.com/alphaKAI/twitter4d)  
   
   
+##Support
+* Linux with libnotify
+* OSX Yosemite with terminal-notifier
+  
+  
 ##How to use
-1. Clone this repository
-`$ git clone https://github.com/alphaKAI/twitnotify.git`  
-2. Exec build.d with rdmd
+1. Clone this repository  
+`$ git clone https://github.com/alphaKAI/twitnotify.git`
+2. Change current directory  
+`$ cd twitnotify`
+3. Exec build.d with rdmd  
 `$ rdmd build.d`  
-3. Configure your consumer & access tokens
+4. Configure your consumer & access tokens  
 `$ (any editor) setting.json`  
-4. Exec TwitNotify binary
-`$ ./twitnotify`
+5. Exec TwitNotify binary  
+`$ dub` or `$ ./twitnotify`
   
   
 ##Requirements
-* dmd(v2.065)
-* rdmd(build 20140327)
-* libnotify & notify-send
+* dmd(v2.066)
+* rdmd
   
-
+####If you want to use on Linux  
+* [libnotify](http://ftp.gnome.org/pub/GNOME/sources/libnotify/0.7/)
+  
+####If you want to use on OSX
+* [terminal-notifier](https://github.com/alloy/terminal-notifier)
+  
+  
 ##Disclaimer
 unstable  
-If target tweet include pictograph, this program skip such tweet to avoid crash.  
   
   
 ##LICENSE
 The MIT License  
-Copyright (C) 2014 alphaKAI http://alpha-kai-net.info  
+Copyright (C) 2014 - 2015 alphaKAI http://alpha-kai-net.info  
   
   
 ##Author
