@@ -1,0 +1,10 @@
+{
+	"name": "twitnotify",
+	"description": "The twitter notification tool",
+	"copyright": "Copyright © 2015, alphakai",
+  "license": "MIT",
+	"authors": ["alphaKAI"],
+	"dependencies": {
+	  "twitter4d":"*"
+  }
+}
