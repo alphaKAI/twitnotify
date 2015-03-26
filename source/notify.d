@@ -64,7 +64,7 @@ class Status{
 class NotifyItem{
   mixin Util;
 
-  bool notifyFlag = true;
+  bool notifyFlag;
   string[string] item;
   private{
     string defaultTime = "1500";  
@@ -76,14 +76,10 @@ class NotifyItem{
     iconBasePath = getcwd() ~ "/icons";
     userName     = _userName;
 
-    try{
-      if("event" == status.kind)
-        processEvent(status);
-      else if("text" == status.kind)
-        processTweet(status);
-      else
-        notifyFlag = false;
-    } catch (Exception ignored) {}
+    if("event" == status.kind)
+      processEvent(status);
+    else if("status" == status.kind)
+      processTweet(status);
   }
 
   private{
@@ -108,6 +104,7 @@ class NotifyItem{
           item["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
           item["body"]    = textData;
         }
+        notifyFlag = true;
       }
     }
 
@@ -126,6 +123,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = name ~ "(@" ~ screenName ~ ") favorite your tweet!";
           item["body"]    = status.target_object["text"];
+          notifyFlag = true;
           break;
         case "unfavorite":
           if(screenName == userName)
@@ -136,6 +134,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = name ~ "(@" ~ screenName ~ ") unfavorite your tweet";
           item["body"]    = status.target_object["text"];
+          notifyFlag = true;
           break;
         case "follow":
           if(screenName == userName)
@@ -146,6 +145,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = "<span size=\"10500\">" ~ name ~ "(@" ~ screenName ~ ") follow you!" ~ "</span>";
           item["body"]    = "";
+          notifyFlag = true;
           break;
         default: break;
       }
@@ -191,7 +191,6 @@ class Notify{
     NotifyItem item   = new NotifyItem(thisStatus, userName);
     if(item.notifyFlag)
       execNotification(item);
-    writeln(thisStatus);
   }
 
   private{
