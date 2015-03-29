@@ -47,6 +47,7 @@ class TwitNotify{
           && status.to!string.match(regex(r"friends"))){
         firstTime = false;
       } else if(status.to!string.match(regex(r"\{.*\}"))){
+        //writeln(parseJSON(status.to!string));
         notify.notify(parseJSON(status.to!string));
       }
     }

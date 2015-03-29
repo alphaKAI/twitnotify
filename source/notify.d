@@ -152,23 +152,29 @@ class NotifyItem{
     }
 
     string getIconPath(Status status){
-      string iconUrl    = status.profile_image_url_https;
-      string screenName = status.user["screen_name"];
+      string iconUrl = status.profile_image_url_https;
       string iconPath;
+      string screenName;
+
+      if(status.kind == "event")
+        screenName = status.source["screen_name"];
+      else
+        screenName = status.user["screen_name"];
 
       if(saveIconImage(iconUrl, screenName))
         iconPath = iconBasePath ~ "/" ~ screenName ~ ".jpeg";
       else
         iconPath = "NULL";
+
       return iconPath;
     }
 
     bool saveIconImage(string iconUrl, string screenName){
       string iconPath = iconBasePath ~ "/" ~ screenName ~ ".jpeg";
       
-      download(iconUrl, iconPath);
       if(!exists(iconPath))
-        return false;
+        download(iconUrl, iconPath);
+
       return true;
     }
   }
