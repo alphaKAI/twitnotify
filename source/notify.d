@@ -38,12 +38,16 @@ class Status{
       kind  = "event";
       event  = getJsonData(json, "event");
 
-      foreach(key; source.keys)
-        source[key] = key in json.object["source"].object ? json.object["source"].object[key].str : "null";
-      foreach(key; target.keys)
-        target[key] = key in json.object["target"].object ? json.object["target"].object[key].str : "null";
-      foreach(key; target_object.keys)
-        target_object[key] = key in json.object["target_object"].object ? json.object["target_object"].object[key].str : "null";
+      if("source" in json.object)
+        foreach(key; source.keys)
+          source[key] = key in json.object["source"].object ? json.object["source"].object[key].str : "null";
+      if("target" in json.object)
+        foreach(key; target.keys)
+          target[key] = key in json.object["target"].object ? json.object["target"].object[key].str : "null";
+      if("target_object" in json.object)
+        foreach(key; target_object.keys)
+          target_object[key] = key in json.object["target_object"].object ? json.object["target_object"].object[key].str : "null";
+        
       profile_image_url_https = getJsonData(json.object["source"], "profile_image_url_https").replace(regex(r"\\", "g"), "");
     } else if("text" in json.object){
       kind = "status";
@@ -143,7 +147,7 @@ class NotifyItem{
           item["icon"]    = getIconPath(status);
           item["urgency"] = "normal";
           item["wait"]    = defaultTime;
-          item["title"]   = "<span size=\"10500\">" ~ name ~ "(@" ~ screenName ~ ") follow you!" ~ "</span>";
+          item["title"]   = name ~ "(@" ~ screenName ~ ") follow you!";
           item["body"]    = "";
           notifyFlag = true;
           break;
@@ -200,6 +204,10 @@ class Notify{
   }
 
   private{
+    void setParameter(ref string baseString, string key, string child){
+      baseString ~= "-" ~ key ~ " " ~ child ~ " ";
+    }
+
     void execNotification(NotifyItem nItem){
       writeln("[EVENT] => ", nItem.item["event"]);
       string notifyCommandString;
@@ -207,9 +215,11 @@ class Notify{
         notifyCommandString = "terminal-notifier ";
 
         if(nItem.item["icon"] != "NULL")
-          notifyCommandString ~= "-appIcon " ~ nItem.item["icon"] ~ " ";
-        notifyCommandString ~= "-title "   ~ "\'" ~ nItem.item["title"] ~ "\' ";
-        notifyCommandString ~= "-message " ~ "\'" ~ nItem.item["body"]  ~ "\'";
+          setParameter(notifyCommandString, "appIcon", nItem.item["icon"]);
+        setParameter(notifyCommandString, "title", "\'" ~ nItem.item["title"] ~ "\'");
+        setParameter(notifyCommandString, "message",  "\'" ~ nItem.item["body"]  ~ "\'");
+        //Todo : When click notification, open in safari
+        //setParameter(notifyCommandString, "execute", "open " ~ nItem.url);
       }
       version(linux){
         notifyCommandString = "notify-send ";
