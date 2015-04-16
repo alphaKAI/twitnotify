@@ -1,188 +1,13 @@
 import twitter4d;
 import std.algorithm,
-       std.datetime,
-       std.net.curl,
        std.process,
-       std.string,
        std.stdio,
        std.regex,
-       std.array,
-       std.file,
        std.json,
        std.conv;
-import util;
-
-class Status{
-  mixin Util;
-  string kind;//event or status
-  string text,
-         in_reply_to_status_id,
-         profile_image_url_https;
-  string event;
-  bool _protected;
-  string[string] user;
-  string[string] target_object;
-  string[string] source;
-  string[string] target;
-
-  this(JSONValue json){
-    user = ["name"        : "",
-            "screen_name" : "",
-            "id_str"      : ""];
-    source = user.dup;
-    target = user.dup;
-    target_object = user.dup;
-    target_object["text"] = "";
-
-    if("event" in json.object){
-      kind  = "event";
-      event  = getJsonData(json, "event");
-
-      if("source" in json.object)
-        foreach(key; source.keys)
-          source[key] = key in json.object["source"].object ? json.object["source"].object[key].str : "null";
-      if("target" in json.object)
-        foreach(key; target.keys)
-          target[key] = key in json.object["target"].object ? json.object["target"].object[key].str : "null";
-      if("target_object" in json.object)
-        foreach(key; target_object.keys)
-          target_object[key] = key in json.object["target_object"].object ? json.object["target_object"].object[key].str : "null";
-        
-      profile_image_url_https = getJsonData(json.object["source"], "profile_image_url_https").replace(regex(r"\\", "g"), "");
-    } else if("text" in json.object){
-      kind = "status";
-      foreach(key; user.keys)
-        user[key] = key in json.object["user"].object ? json.object["user"].object[key].str : "null";
-      in_reply_to_status_id = getJsonData(json, "id_str");
-      text                  = json.object["text"].str;
-      _protected            = getJsonData(json.object["user"], "protected").to!bool;
-      profile_image_url_https = getJsonData(json.object["user"], "profile_image_url_https").replace(regex(r"\\", "g"), "");
-    }
-  }
-
-  bool isReply(string botID){
-    return text.match(regex(r"^@" ~ botID)).empty ? false: true;
-  }
-}
-
-class NotifyItem{
-  mixin Util;
-
-  bool notifyFlag;
-  string[string] item;
-  private{
-    string defaultTime = "1500";  
-    string userName;
-    string iconBasePath;
-  }
-
-  this(Status status, string _userName){
-    iconBasePath = getcwd() ~ "/icons";
-    userName     = _userName;
-
-    if("event" == status.kind)
-      processEvent(status);
-    else if("status" == status.kind)
-      processTweet(status);
-  }
-
-  private{
-    void processTweet(Status status){
-      string textData = status.text;
-      if(match(textData, regex(r"@" ~ userName))){
-        string name       = status.user["name"];
-        string screenName = status.user["screen_name"];
-
-        if(match(textData, regex(r"^RT @" ~ userName))){
-          item["event"]   = "retweet";
-          item["icon"]    = status.profile_image_url_https;
-          item["urgency"] = "normal";
-          item["wait"]    = defaultTime;
-          item["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
-          item["body"]    = status.text.replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
-        } else {
-          item["event"]   = "reply";
-          item["icon"]    = status.profile_image_url_https;
-          item["urgency"] = "critical";
-          item["wait"]    = defaultTime;
-          item["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
-          item["body"]    = textData;
-        }
-        notifyFlag = true;
-      }
-    }
-
-    void processEvent(Status status){
-      string eventName     = status.event;
-      string name          = status.source["name"];
-      string screenName    = status.source["screen_name"];
-
-      switch(eventName){
-        case "favorite":
-          if(screenName == userName)
-            goto default;
-          item["event"]   = eventName;
-          item["icon"]    = getIconPath(status);
-          item["urgency"] = "normal";
-          item["wait"]    = defaultTime;
-          item["title"]   = name ~ "(@" ~ screenName ~ ") favorite your tweet!";
-          item["body"]    = status.target_object["text"];
-          notifyFlag = true;
-          break;
-        case "unfavorite":
-          if(screenName == userName)
-            goto default;
-          item["event"]   = eventName;
-          item["icon"]    = getIconPath(status);
-          item["urgency"] = "critical";
-          item["wait"]    = defaultTime;
-          item["title"]   = name ~ "(@" ~ screenName ~ ") unfavorite your tweet";
-          item["body"]    = status.target_object["text"];
-          notifyFlag = true;
-          break;
-        case "follow":
-          if(screenName == userName)
-            goto default;
-          item["event"]   = eventName;
-          item["icon"]    = getIconPath(status);
-          item["urgency"] = "normal";
-          item["wait"]    = defaultTime;
-          item["title"]   = name ~ "(@" ~ screenName ~ ") follow you!";
-          item["body"]    = "";
-          notifyFlag = true;
-          break;
-        default: break;
-      }
-    }
-
-    string getIconPath(Status status){
-      string iconUrl = status.profile_image_url_https;
-      string iconPath;
-      string screenName;
-
-      if(status.kind == "event")
-        screenName = status.source["screen_name"];
-      else
-        screenName = status.user["screen_name"];
-
-      if(saveIconImage(iconUrl, screenName))
-        iconPath = iconBasePath ~ "/" ~ screenName ~ ".jpeg";
-      else
-        iconPath = "NULL";
-
-      return iconPath;
-    }
-
-    bool saveIconImage(string iconUrl, string screenName){
-      string iconPath = iconBasePath ~ "/" ~ screenName ~ ".jpeg";
-      
-      if(!exists(iconPath))
-        download(iconUrl, iconPath);
-
-      return true;
-    }
-  }
-}
+import notifyItem,
+       status,
+       util;
 
 class Notify{
   mixin Util;
@@ -209,7 +34,7 @@ class Notify{
     }
 
     void execNotification(NotifyItem nItem){
-      writeln("[EVENT] => ", nItem.item["event"]);
+      writeln("\r[EVENT] => ", nItem.item["event"]);
       string notifyCommandString;
       version(OSX){
         notifyCommandString = "terminal-notifier ";
