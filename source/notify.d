@@ -56,7 +56,7 @@ class Notify{
         notifyCommandString ~= "\'"  ~ nItem.item["title"]   ~ "\'" ~ " ";
         notifyCommandString ~= "\'"  ~ nItem.item["body"]    ~ "\'";
       }
-      system(notifyCommandString);
+      executeShell(notifyCommandString);
     }
   }
 }

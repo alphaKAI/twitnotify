@@ -19,7 +19,8 @@ import std.net.curl,
        std.file,
        std.conv,
        std.json;
-import std.c.linux.linux;
+import core.sys.posix.pwd;
+import core.sys.posix.unistd;
 import notify,
        util;
 
