@@ -21,37 +21,77 @@ import std.net.curl,
        std.json;
 import core.sys.posix.pwd;
 import core.sys.posix.unistd;
+import core.thread;
 import notify,
        util;
+
+class TNUser{
+  string         name;
+  string[string] authKeys;
+  Twitter4D      t4d;
+  Notify         notify;
+
+  this(string _name, string[string] argHash){
+    name = _name;
+    this(argHash);
+  }
+
+  this(string[string] argHash){
+    authKeys = argHash;
+    t4d = new Twitter4D(authKeys);
+    notify = new Notify(t4d);
+  }
+}
 
 class TwitNotify{
   mixin Util;
   Twitter4D t4d;
-  Notify    notify;
+  TNUser[string] tnUsers;
+  bool multiAccount;
 
   this(){
     string jsonString = readSettingFile();
     auto parsed       = parseJSON(jsonString);
+    
+    if("accounts" in parsed.object){
+      multiAccount = true;
+      foreach(key; parsed.object["accounts"].object.keys)
+        tnUsers[key] = new TNUser(key, buildAuthHash(parsed.object["accounts"].object[key]));
+    }
 
-    t4d = new Twitter4D([
-        "consumerKey"       : getJsonData(parsed, "consumerKey"),
-        "consumerSecret"    : getJsonData(parsed, "consumerSecret"),
-        "accessToken"       : getJsonData(parsed, "accessToken"),
-        "accessTokenSecret" : getJsonData(parsed, "accessTokenSecret")]);
-    notify = new Notify(t4d);
+    if(multiAccount){
+      writeln("Boot as multiUser Mode");
+      writeln("accounts");
+      foreach(user; tnUsers)
+        writeln(" - ", user.name);
+    } else{
+      writeln("Boot as singleUser Mode");
+      tnUsers["single"] = new TNUser(buildAuthHash(parsed));
+    }
   }
 
   void startWatchingService(){
-    bool firstTime = true;
-    foreach(status; t4d.stream())
-      if(firstTime && status.to!string.match(regex(r"\{.*\}"))
-          && status.to!string.match(regex(r"friends")))
-        firstTime = false;
-      else if(status.to!string.match(regex(r"\{.*\}")))
-        notify.notify(parseJSON(status.to!string));
+    foreach(user; tnUsers){
+      new Thread((){
+        bool firstTime = true;
+        foreach(status; user.t4d.stream())
+          if(firstTime && status.to!string.match(regex(r"\{.*\}"))
+              && status.to!string.match(regex(r"friends")))
+            firstTime = false;
+         else if(status.to!string.match(regex(r"\{.*\}")))
+            user.notify.notify(parseJSON(status.to!string));
+      }).start;
+    }
   }
 
   private{
+    string[string] buildAuthHash(JSONValue parsed){
+        return ["consumerKey"       : getJsonData(parsed, "consumerKey"),
+                "consumerSecret"    : getJsonData(parsed, "consumerSecret"),
+                "accessToken"       : getJsonData(parsed, "accessToken"),
+                "accessTokenSecret" : getJsonData(parsed, "accessTokenSecret")];
+    }
+
     string readSettingFile(){
       string settingFilePath = "setting.json";
       if(!exists(settingFilePath)){
@@ -76,12 +116,7 @@ class TwitNotify{
           throw new Error("Please create file of setting.json and configure your consumer & access tokens");
       }
 
-      auto file = File(settingFilePath, "r");
-      string buf;
-
-      foreach(line; file.byLine)
-        buf = buf ~ cast(string)line;      
-      return buf;
+      return readFile(settingFilePath);
     }
   }
 }
