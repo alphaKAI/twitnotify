@@ -5,6 +5,6 @@
   "license": "MIT",
 	"authors": ["alphaKAI"],
 	"dependencies": {
-	  "twitter4d":"~master"
+	  "twitter4d":"*"
   }
 }

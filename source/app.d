@@ -22,8 +22,8 @@ import std.net.curl,
 import core.sys.posix.pwd;
 import core.sys.posix.unistd;
 import core.thread;
-import notify,
-       util;
+import twitnotify.notify,
+       twitnotify.util;
 
 class TNUser{
   string         name;
