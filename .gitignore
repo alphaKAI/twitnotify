@@ -1,9 +1,8 @@
 setting.json
-twitnotify*
+twitnotify
+!twitnotify/
 test*.*
 icons/
-test/
-key/
 .dub
 docs.json
 __dummy.html
