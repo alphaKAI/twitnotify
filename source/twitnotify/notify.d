@@ -19,7 +19,7 @@ class Notify{
 
   this(Twitter4D twitter4dInstance){
     t4d = twitter4dInstance;
-    userName = getJsonData(parseJSON(t4d.request("GET", "account/verify_credentials.json", ["" : ""])), "screen_name");
+    userName = getJsonData(parseJSON(t4d.request("GET", "account/verify_credentials.json")), "screen_name");
   }
 
   void notify(JSONValue parsed){
@@ -44,8 +44,7 @@ class Notify{
           setParameter(notifyCommandString, "appIcon", nItem.item["icon"]);
         setParameter(notifyCommandString, "title", "\'" ~ nItem.item["title"] ~ "\'");
         setParameter(notifyCommandString, "message",  "\'" ~ nItem.item["body"]  ~ "\'");
-        //Todo : When click notification, open in safari
-        //setParameter(notifyCommandString, "execute", "open " ~ nItem.url);
+        setParameter(notifyCommandString, "open", nItem.item["url"]);
       }
       version(linux){
         notifyCommandString = "notify-send ";

@@ -10,6 +10,7 @@ class Status{
   string text,
          in_reply_to_status_id,
          profile_image_url_https;
+  string id_str;
   string event;
   bool _protected;
   string[string] user;
@@ -29,6 +30,8 @@ class Status{
     if("event" in json.object){
       kind  = "event";
       event  = getJsonData(json, "event");
+      if(event != "follow")
+        id_str = getJsonData(json.object["target_object"], "id_str");
 
       if("source" in json.object)
         foreach(key; source.keys)
@@ -43,6 +46,7 @@ class Status{
       profile_image_url_https = getJsonData(json.object["source"], "profile_image_url_https").replace(regex(r"\\", "g"), "");
     } else if("text" in json.object){
       kind = "status";
+      id_str = getJsonData(json, "id_str");
       foreach(key; user.keys)
         user[key] = key in json.object["user"].object ? json.object["user"].object[key].str : "null";
       in_reply_to_status_id = getJsonData(json, "id_str");

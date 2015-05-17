@@ -16,6 +16,7 @@ class NotifyItem{
     string defaultTime = "1500";  
     string userName;
     string iconBasePath;
+    immutable twitterURL = "https://twitter.com/";
   }
 
   this(Status status, string _userName){
@@ -42,6 +43,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = name ~ "(@" ~ screenName ~ ") retweet your tweet!";
           item["body"]    = status.text.replace(regex(r"^ RT @" ~ screenName ~ r": \s"), "");
+          item["url"]     = twitterURL ~  screenName ~ "/status/" ~ status.id_str;
         } else {
           item["event"]   = "reply";
           item["icon"]    = status.profile_image_url_https;
@@ -49,6 +51,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = "Reply From " ~ name ~ "(@" ~ screenName ~ ")";
           item["body"]    = textData;
+          item["url"]     = twitterURL ~ screenName ~ "/status/" ~ status.id_str;
         }
         notifyFlag = true;
       }
@@ -69,6 +72,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = name ~ "(@" ~ screenName ~ ") favorite your tweet!";
           item["body"]    = status.target_object["text"];
+          item["url"]     = twitterURL ~ screenName ~ "/status/" ~ status.id_str;
           notifyFlag = true;
           break;
         case "unfavorite":
@@ -80,6 +84,7 @@ class NotifyItem{
           item["wait"]    = defaultTime;
           item["title"]   = name ~ "(@" ~ screenName ~ ") unfavorite your tweet";
           item["body"]    = status.target_object["text"];
+          item["url"]     = twitterURL ~ screenName ~ "/status/" ~ status.id_str;
           notifyFlag = true;
           break;
         case "follow":
@@ -90,7 +95,8 @@ class NotifyItem{
           item["urgency"] = "normal";
           item["wait"]    = defaultTime;
           item["title"]   = name ~ "(@" ~ screenName ~ ") follow you!";
-          item["body"]    = "";
+          item["body"]    = "New follower!";
+          item["url"]     = twitterURL ~ screenName;
           notifyFlag = true;
           break;
         default: break;
