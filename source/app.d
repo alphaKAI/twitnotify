@@ -72,19 +72,32 @@ class TwitNotify{
 
   void startWatchingService(){
     foreach(user; tnUsers){
-      new Thread((){
-        bool firstTime = true;
-        foreach(status; user.t4d.stream())
-          if(firstTime && status.to!string.match(regex(r"\{.*\}"))
-              && status.to!string.match(regex(r"friends")))
-            firstTime = false;
-         else if(status.to!string.match(regex(r"\{.*\}")))
-            user.notify.notify(parseJSON(status.to!string));
-      }).start;
+      startUserProcess(user);
     }
   }
 
   private{
+    void startUserProcess(TNUser user) {
+      new Thread(() {
+        string thisStatus;
+        try{
+          bool firstTime = true;
+          foreach(status; user.t4d.stream()){
+            thisStatus = status.to!string;
+            if(firstTime && status.to!string.match(regex(r"\{.*\}"))
+                && status.to!string.match(regex(r"friends")))
+              firstTime = false;
+            else if(status.to!string.match(regex(r"\{.*\}")))
+              user.notify.notify(parseJSON(status.to!string));
+          }
+        } catch(Exception e) {
+          writeln("Exception!:", thisStatus);  
+          writeln("RESTART => ", user.name);
+          startUserProcess(user);
+        }
+      }).start;
+    }
+
     string[string] buildAuthHash(JSONValue parsed){
         return ["consumerKey"       : getJsonData(parsed, "consumerKey"),
                 "consumerSecret"    : getJsonData(parsed, "consumerSecret"),

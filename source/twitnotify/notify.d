@@ -46,6 +46,7 @@ class Notify{
         setParameter(notifyCommandString, "message",  "\'" ~ nItem.item["body"]  ~ "\'");
         setParameter(notifyCommandString, "open", nItem.item["url"]);
       }
+
       version(linux){
         notifyCommandString = "notify-send ";
 
@@ -56,6 +57,7 @@ class Notify{
         notifyCommandString ~= "\'"  ~ nItem.item["title"]   ~ "\'" ~ " ";
         notifyCommandString ~= "\'"  ~ nItem.item["body"]    ~ "\'";
       }
+
       executeShell(notifyCommandString);
     }
   }
